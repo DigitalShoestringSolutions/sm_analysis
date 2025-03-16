@@ -1,0 +1,50 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Analysis Service Module Config",
+    "description": "A representation of the expected format for the config file for this service module",
+    "type": "object",
+    "properties": {
+        "config": {
+            "type": "object"
+        },
+        "routes": {
+            "description": "",
+            "type": "object",
+            "patternProperties": {
+                "^.*$": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "description": "api path to request this analysis",
+                            "type": "string",
+                            "pattern": "^/[\\w/]*[/]?$"
+                        },
+                        "methods": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "get",
+                                    "post"
+                                ]
+                            },
+                            "unevaluatedItems": false
+                        },
+                        "module": {
+                            "type": "string"
+                        },
+                        "function": {
+                            "type": "string"
+                        },
+                        "config": {
+                            "type": "object"
+                        }
+                    },
+                    "required":["path","methods","module","function"],
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        }
+    }
+}
