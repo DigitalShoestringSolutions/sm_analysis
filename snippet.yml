@@ -1,4 +1,4 @@
 build: "placeholder"
 command: ["python","main.py","--log","{{log_level}}"]
 environment:
-  - CONFIG__INFLUX__TOKEN=${DB_ADMIN_INITIAL_TOKEN}
+  - INFLUX__TOKEN=${DB_ADMIN_INITIAL_TOKEN}

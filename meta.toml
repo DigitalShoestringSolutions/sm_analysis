@@ -2,7 +2,7 @@
 [analysis-sm]
     dockerfile = "Dockerfile"
     compose_partial = "snippet.yml"
-    volume.data.ignore = true
+    volume.data.path = "/app/data"
     volume.user_config.path = "/app/user_config"
     volume.user_config.mode = "ro"
     ports.api = 80
