@@ -8,24 +8,61 @@ import json
 import os
 import logging
 import sys
+import argparse
 
 logger = logging.getLogger("config")
 
 
+def handle_args():
+    levels = {
+        "debug": logging.DEBUG,
+        "info": logging.INFO,
+        "warning": logging.WARNING,
+        "error": logging.ERROR,
+    }
+    parser = argparse.ArgumentParser(
+        description="Analysis service module.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "--log",
+        choices=["debug", "info", "warning", "error"],
+        help="Log level",
+        default="info",
+        type=str,
+    )
+    parser.add_argument("--module_config", help="Module config file", type=str)
+    parser.add_argument("--user_config", help="User config file", type=str)
+    args = parser.parse_args()
+
+    log_level = levels.get(args.log, logging.INFO)
+    module_config_file = args.module_config
+    user_config_file = args.user_config
+
+    return {
+        "log_level": log_level,
+        "module_config_file": module_config_file,
+        "user_config_file": user_config_file,
+    }
+
+
 def get_config(arg_module_file=None, arg_user_file=None):
     user_config_file, user_config_src = select_file(
-        arg_user_file, "USER_CONFIG_FILE", "./user_config/config.toml")
+        arg_user_file, "USER_CONFIG_FILE", "./user_config/user_config.toml"
+    )
 
     user_config = load_config(user_config_file, user_config_src)
     user_config_specified_module_config_file = user_config.get(
-        "module_config_file", None)
+        "module_config_file", None
+    )
 
     other_module_config_sources = [
-        (user_config_specified_module_config_file, "user config")]
+        (user_config_specified_module_config_file, "user config")
+    ]
     module_config_file, module_config_src = select_file(
         arg_module_file,
         "MODULE_CONFIG_FILE",
-        "./module_config/config.toml",
+        "./module_config/module_config.toml",
         other_sources=other_module_config_sources,
     )
 
@@ -47,7 +84,7 @@ def get_config(arg_module_file=None, arg_user_file=None):
 
 def select_file(arg_file, env_var, default, other_sources=[]):
     config_file = (default, "default")
-    
+
     for file, src in other_sources:
         if file:
             config_file = (file, src)
@@ -71,17 +108,22 @@ def load_config(filename, src):
         return config
     except FileNotFoundError:
         logger.critical(
-            f'Config File Not Found - unable to load config file "{filename}" specified by {src}.')
+            f'Config File Not Found - unable to load config file "{filename}" specified by {src}.'
+        )
         sys.exit(255)
 
 
 def do_validate(config, schema, label=""):
     try:
-        jsonschema.validate(instance=config, schema=schema,
-                            format_checker=jsonschema.Draft202012Validator.FORMAT_CHECKER)
+        jsonschema.validate(
+            instance=config,
+            schema=schema,
+            format_checker=jsonschema.Draft202012Validator.FORMAT_CHECKER,
+        )
     except jsonschema.ValidationError as v_err:
         logger.critical(
-            f"CONFIG ERROR on {label} - {v_err.json_path} >> {v_err.message}")
+            f"CONFIG ERROR on {label} - {v_err.json_path} >> {v_err.message}"
+        )
         sys.exit(255)
 
 
@@ -94,9 +136,9 @@ def combine(A, B):
 def do_combine(original, new):
     for k, v in new.items():
         if k in original:
-            if isinstance(original[k], dict):    # handle nesting
+            if isinstance(original[k], dict):  # handle nesting
                 do_combine(original[k], v)
-            else:   # handle value replacement
+            else:  # handle value replacement
                 original[k] = v
         else:  # handle new value
             original[k] = v
