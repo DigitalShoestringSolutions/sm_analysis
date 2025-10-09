@@ -9,8 +9,18 @@ from apscheduler.events import (
     EVENT_JOB_MISSED,
     JobExecutionEvent,
 )
+import asyncio
 import traceback
 from apscheduler.executors.asyncio import AsyncIOExecutor
+
+RATE_LIMIT_SECONDS = 1  # minimum seconds between job starts
+# to track last run time across all jobs using this executor
+
+last_run_for_rate_limit = datetime.datetime.now(
+    datetime.timezone.utc
+) - datetime.timedelta(
+    seconds=2 * RATE_LIMIT_SECONDS
+)  # to allow immediate first run
 
 
 # Copied from apscheduler.executors.base.run_coroutine_job adding execution_time=run_time to function call
@@ -19,6 +29,8 @@ async def run_coroutine_job(job, jobstore_alias, run_times, logger_name):
     events = []
     logger = logging.getLogger(logger_name)
     last_run = None
+    global last_run_for_rate_limit
+
     for run_time in run_times:
         # See if the job missed its run time window, and handle possible misfires accordingly
         if job.misfire_grace_time is not None:
@@ -32,7 +44,9 @@ async def run_coroutine_job(job, jobstore_alias, run_times, logger_name):
                 )
                 logger.warning('Run time of job "%s" was missed by %s', job, difference)
                 continue
-        logger.info(f'Running job "{job}" (scheduled at {run_time})')
+        logger.info(
+            f'[{datetime.datetime.now(datetime.timezone.utc)}] Running job "{job}" (scheduled at {run_time})'
+        )
 
         try:
             ## MODIFIED
@@ -41,17 +55,26 @@ async def run_coroutine_job(job, jobstore_alias, run_times, logger_name):
                     **job.kwargs,
                     "last_run": last_run,
                     "execution_time": run_time,
-                }        
+                }
             else:
                 kwargs = {
                     **job.kwargs,
                     "execution_time": run_time,
-                }  
+                }
+
+            time_since_last_run = (
+                datetime.datetime.now(datetime.timezone.utc) - last_run_for_rate_limit
+            )
+            if time_since_last_run < datetime.timedelta(seconds=RATE_LIMIT_SECONDS):
+                delay = RATE_LIMIT_SECONDS - time_since_last_run.total_seconds()
+                await asyncio.sleep(delay)
+            last_run_for_rate_limit = datetime.datetime.now(datetime.timezone.utc)
 
             retval = await job.func(
                 *job.args,
                 **kwargs,
             )
+
             # needed with the above to avoid case where not set on startup
             last_run = run_time
             job.modify(kwargs={**job.kwargs, "last_run": last_run})
