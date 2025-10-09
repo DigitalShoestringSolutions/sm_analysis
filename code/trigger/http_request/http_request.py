@@ -1,6 +1,7 @@
 import aiohttp, aiohttp.web
 import logging
 import asyncio
+import aiohttp_cors
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +74,21 @@ class HTTPTrigger:
 
     # This is the coroutine that runs the server
     async def run(self):
+        cors = aiohttp_cors.setup(
+            self.app,
+            defaults={
+                "*": aiohttp_cors.ResourceOptions(
+                    allow_credentials=True,
+                    expose_headers="*",
+                    allow_headers="*",
+                    allow_methods="*",
+                )
+            },
+        )
+
+        for route in list(self.app.router.resources()): # list() to iterate over a copy as it changes
+            if isinstance(route, aiohttp.web.Resource): # Filter for actual URL resources
+                cors.add(route) # This applies the defaults specified above
         logging.getLogger("aiohttp").setLevel(logging.INFO)
         runner = aiohttp.web.AppRunner(self.app)
         await runner.setup()
