@@ -37,7 +37,7 @@ class MQTTTrigger:
         while exceptions and terminate_flag is False:
             try:
                 if first_time:
-                    client.connect(self.url, self.port, 60)
+                    client.connect(self.broker, self.port, 60)
                 else:
                     logger.error("Attempting to reconnect...")
                     client.reconnect()
