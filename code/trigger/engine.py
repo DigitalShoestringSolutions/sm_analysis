@@ -17,7 +17,7 @@ class TriggerEngine:
         await asyncio.gather(
             self.__scheduler.run(),
             self.__http.run(),
-            self.__mqtt.run("mqtt.docker.local"),
+            self.__mqtt.run(),
         )
 
     @property
