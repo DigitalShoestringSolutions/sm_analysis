@@ -50,9 +50,8 @@ class MQTTTrigger:
             except Exception:
                 logger.error(f"Unable to connect, retrying in {timeout} seconds")
                 await asyncio.sleep(timeout)
-                if timeout < self.limit:
-                    timeout = timeout * self.backoff
-                else:
+                timeout *= self.backoff
+                if timeout > self.limit:
                     timeout = self.limit
 
     async def run(self):
