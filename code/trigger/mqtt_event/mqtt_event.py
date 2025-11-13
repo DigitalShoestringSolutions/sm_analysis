@@ -24,6 +24,9 @@ class MQTTTrigger:
         self.mqtt_handler = MQTTHandler()
         self.config = config
 
+        self.broker = config.get("input_broker", "mqtt.docker.local")
+        self.port = config.get("input_port", 1883)
+
         self.initial = 5
         self.backoff = 2
         self.limit = 60
@@ -52,13 +55,10 @@ class MQTTTrigger:
                 else:
                     timeout = self.limit
 
-    async def run(self,broker, port=1883):
+    async def run(self):
         # Setup signal handlers for graceful termination
         signal.signal(signal.SIGINT, graceful_signal_handler)
         signal.signal(signal.SIGTERM, graceful_signal_handler)
-
-        self.broker = broker
-        self.port = port
 
         mqttc = MQTTClient(CallbackAPIVersion.VERSION2)
         mqttc.on_connect = mqtt_on_connect
