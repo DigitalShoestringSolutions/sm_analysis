@@ -70,8 +70,8 @@ class MQTTTrigger:
 
         try:
             while terminate_flag is False:
-                await asyncio.sleep(0.5)
-                rc = mqttc.loop(timeout=0.5)
+                await asyncio.sleep(0.1)
+                rc = mqttc.loop(timeout=0.1)
                 if rc == 0:
                     await self.mqtt_handler.call_functions_for_messages(self.config)
 
@@ -94,7 +94,7 @@ class MQTTTrigger:
             logger.error(
                 f"Unexpected MQTT disconnection (rc:{reason_code}), reconnecting..."
             )
-            self.mqtt_connect(client)
+            asyncio.get_running_loop().create_task(self.mqtt_connect(client))
 
 
 def mqtt_on_connect(
@@ -103,6 +103,8 @@ def mqtt_on_connect(
     logger.info(f"MQTT client connected with result code {reason_code}")
     for topic in handler.subscriptions:
         client.subscribe(topic)
+        
+    logger.info(f"Subscribed to topics: {handler.subscriptions}")
 
 
 def mqtt_on_message(client: MQTTClient, handler: MQTTHandler, msg):
