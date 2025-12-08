@@ -40,6 +40,8 @@ def latest_current_and_voltage(config, dt_to,machine):
                 |> filter(fn: (r) => r["_field"] == "current"or r["_field"] == "voltage" or r["_field"] == "power_real" or r["_field"] == "power_apparent")
                 {'|> filter(fn: (r) => r["machine"] == _machine)' if machine else ""}
                 |> aggregateWindow(every: 5s, fn: mean, createEmpty: true, timeSrc:"_start")
+                |> group(columns: ["machine","_field","_time"])
+                |> sum()
                 |> group(columns: ["machine","_field"])
                 |> last()
                 |> group(columns: ["machine"])
