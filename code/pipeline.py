@@ -1,4 +1,4 @@
-from typing import Self
+from typing import Self, Tuple
 
 class Pipeline:
     def __init__(self,result):
@@ -16,3 +16,5 @@ class Pipeline:
     def result(self):
         return self.__result
 
+    def split(self) -> Tuple[Self,Self]:
+        return Pipeline(self.__result), Pipeline(self.__result)
