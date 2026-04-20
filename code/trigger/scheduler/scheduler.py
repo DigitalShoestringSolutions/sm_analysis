@@ -38,6 +38,7 @@ class ScheduleTrigger:
         all_jobs = self.scheduler.get_jobs()
         for job in all_jobs:
             logger.info(f"Loaded from Jobstore: {job.id}")
+        self.scheduler.remove_all_jobs()    # remove old jobs - startup overhead outweighs the benefit of keeping them
 
         for args in self.deffered_tasks:
             self.schedule_task(*args)

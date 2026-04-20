@@ -130,7 +130,7 @@ def do_query(url, token, org, query, **params):
 
 @lru_cache
 def get_period_regex():
-    return re.compile("(?P<number>\d*)(?P<unit>\w*)")
+    return re.compile(r"(?P<number>\d*)(?P<unit>\w*)")
 
 
 @lru_cache
