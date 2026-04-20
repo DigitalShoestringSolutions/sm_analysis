@@ -8,6 +8,28 @@ from influxdb_client.client.influxdb_client_async import InfluxDBClientAsync
 
 logger = logging.getLogger(__name__)
 
+def per_phase_current(config,dt_from,dt_to,t_window="5s"):
+    query = """
+    from(bucket: _bucket)
+        |> range(start: _start, stop: _stop)
+        |> filter(fn: (r) => r["_measurement"] == "equipment_power_usage")
+        |> filter(fn: (r) => r["_field"] == "current")
+        |> aggregateWindow(every: _t_window, fn: mean, createEmpty: true, timeSrc:"_start")
+        |> pivot(columnKey: ["phase"], rowKey: ["_time"], valueColumn: "_value")
+        |> keep(columns:["_time","machine","A","B","C","single"])
+    """
+    return do_query(
+        config["influx"]["url"],
+        config["influx"]["token"],
+        config["influx"]["org"],
+        query,
+        _bucket=config["influx"].get("bucket"),
+        _start=dt_from,
+        _stop=dt_to,
+        _t_window=Interval(t_window).timedelta,
+    )
+
+
 def current_and_voltage(config, dt_from ,dt_to, t_window="5s"):
     query = """
             from(bucket: _bucket)
