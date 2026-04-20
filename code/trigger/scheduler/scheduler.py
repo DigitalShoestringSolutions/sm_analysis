@@ -93,7 +93,7 @@ class ScheduleTrigger:
                 coalesce=False,
                 replace_existing=True,
                 misfire_grace_time=grace_time_seconds,
-                kwargs={"last_run": datetime.datetime.now(), "config": self.config}
+                kwargs={"last_run": datetime.datetime.now(tz=datetime.timezone.utc), "config": self.config}
             )
 
     def deffered_schedule_task(self, *args):

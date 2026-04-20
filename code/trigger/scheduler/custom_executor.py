@@ -45,7 +45,7 @@ async def run_coroutine_job(job, jobstore_alias, run_times, logger_name):
                 logger.warning('Run time of job "%s" was missed by %s', job, difference)
                 continue
         logger.info(
-            f'[{datetime.datetime.now(datetime.timezone.utc)}] Running job "{job}" (scheduled at {run_time})'
+            f'[{datetime.datetime.now(tz=datetime.timezone.utc)}] Running job "{job}" (scheduled at {run_time})'
         )
 
         try:
