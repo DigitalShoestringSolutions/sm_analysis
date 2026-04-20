@@ -8,13 +8,13 @@ from influxdb_client.client.influxdb_client_async import InfluxDBClientAsync
 
 logger = logging.getLogger(__name__)
 
-def current_and_voltage(config, dt_from ,dt_to):
+def current_and_voltage(config, dt_from ,dt_to, t_window="5s"):
     query = """
             from(bucket: _bucket)
                 |> range(start: _start, stop: _stop)
                 |> filter(fn: (r) => r["_measurement"] == "equipment_power_usage")
                 |> filter(fn: (r) => r["_field"] == "current"or r["_field"] == "voltage" or r["_field"] == "power_real" or r["_field"] == "power_apparent")
-                |> aggregateWindow(every: 5s, fn: mean, createEmpty: true, timeSrc:"_start")
+                |> aggregateWindow(every: _t_window, fn: mean, createEmpty: true, timeSrc:"_start")
                 |> group(columns: ["machine","_field","_time"])
                 |> sum()
                 |> group(columns: ["machine"])
@@ -29,17 +29,18 @@ def current_and_voltage(config, dt_from ,dt_to):
         _bucket=config["influx"].get("bucket"),
         _start=dt_from,
         _stop=dt_to,
+        _t_window=Interval(t_window).timedelta,
     )
 
 
-def latest_current_and_voltage(config, dt_to,machine):
+def latest_current_and_voltage(config, dt_to,machine,t_window="5s"):
     query = f"""
             from(bucket: _bucket)
                 |> range(start: _start, stop: _stop)
                 |> filter(fn: (r) => r["_measurement"] == "equipment_power_usage")
                 |> filter(fn: (r) => r["_field"] == "current"or r["_field"] == "voltage" or r["_field"] == "power_real" or r["_field"] == "power_apparent")
                 {'|> filter(fn: (r) => r["machine"] == _machine)' if machine else ""}
-                |> aggregateWindow(every: 5s, fn: mean, createEmpty: true, timeSrc:"_start")
+                |> aggregateWindow(every: _t_window, fn: mean, createEmpty: true, timeSrc:"_start")
                 |> group(columns: ["machine","_field","_time"])
                 |> sum()
                 |> group(columns: ["machine","_field"])
@@ -56,7 +57,8 @@ def latest_current_and_voltage(config, dt_to,machine):
         _bucket=config["influx"].get("bucket"),
         _start=dt_to - datetime.timedelta(minutes=1),
         _stop=dt_to,
-        _machine = machine
+        _machine=machine,
+        _t_window=Interval(t_window).timedelta,
     )
 
 
@@ -128,7 +130,7 @@ def do_query(url, token, org, query, **params):
 
 @lru_cache
 def get_period_regex():
-    return re.compile("(?P<number>\d*)(?P<unit>\w*)")
+    return re.compile(r"(?P<number>\d*)(?P<unit>\w*)")
 
 
 @lru_cache

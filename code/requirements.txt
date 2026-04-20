@@ -9,3 +9,4 @@ aiohttp==3.12.12
 aiohttp-cors==0.8.1
 apscheduler==3.10.4
 SQLAlchemy==2.0.41
+requests==2.31.0
