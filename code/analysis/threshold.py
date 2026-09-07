@@ -74,7 +74,7 @@ class ThresholdEngine:
             return None
 
         try:
-            timestamp = datetime.fromisoformat(timestamp_raw)
+            timestamp = datetime.datetime.fromisoformat(timestamp_raw)
         except (ValueError, TypeError) as e:
             logger.error(
                 f"Invalid timestamp value '{timestamp_raw}' for {machine_id}: {e}"
